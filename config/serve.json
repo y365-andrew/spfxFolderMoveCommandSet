@@ -1,0 +1,31 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/core-build/serve.schema.json",
+  "port": 4321,
+  "https": true,
+  "serveConfigurations": {
+    "default": {
+      "pageUrl": "https://ducon365.sharepoint.com/sites/intranet/projects/Current%20Bids/Forms/AllItems.aspx",
+      "customActions": {
+        "cdaa66dd-1ef6-4b33-8c44-b2aef9a049e0": {
+          "location": "ClientSideExtension.ListViewCommandSet.CommandBar",
+          "properties": {
+            "sampleTextOne": "One item is selected in the list",
+            "sampleTextTwo": "This command is always visible."
+          }
+        }
+      }
+    },
+    "y365FolderMove": {
+      "pageUrl": "https://ducon365.sharepoint.com/sites/intranet/projects/Current%20Bids/Forms/AllItems.aspx",
+      "customActions": {
+        "cdaa66dd-1ef6-4b33-8c44-b2aef9a049e0": {
+          "location": "ClientSideExtension.ListViewCommandSet.CommandBar",
+          "properties": {
+            "sampleTextOne": "One item is selected in the list",
+            "sampleTextTwo": "This command is always visible."
+          }
+        }
+      }
+    }
+  }
+}
