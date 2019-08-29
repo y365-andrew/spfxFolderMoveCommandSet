@@ -17,13 +17,8 @@
 
   "items": {
     "MOVE_FOLDER": {
-      "title": { "default": "Move Folder" },
-      "iconImageUrl": "icons/request.png",
-      "type": "command"
-    },
-    "COMMAND_2": {
-      "title": { "default": "Command Two" },
-      "iconImageUrl": "icons/cancel.png",
+      "title": { "default": "Shift" },
+      "iconImageUrl": "https://img.icons8.com/pastel-glyph/64/000000/truck.png",
       "type": "command"
     }
   }

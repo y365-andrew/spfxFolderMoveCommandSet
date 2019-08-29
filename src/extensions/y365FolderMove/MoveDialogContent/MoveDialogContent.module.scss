@@ -1,6 +1,10 @@
 .dialogBody{
-  min-width: 700px;
-  height: 80vh;
+  width: 700px;
+}
+
+.folderListContainer{
+  overflow-y: scroll;
+  height: 400px;
 }
 
 .primaryButton{

@@ -2,7 +2,7 @@
 <Elements xmlns="http://schemas.microsoft.com/sharepoint/">
     <CustomAction
         Title="Y365FolderMove"
-        RegistrationId="100"
+        RegistrationId="101"
         RegistrationType="List"
         Location="ClientSideExtension.ListViewCommandSet.CommandBar"
         ClientSideComponentId="cdaa66dd-1ef6-4b33-8c44-b2aef9a049e0"

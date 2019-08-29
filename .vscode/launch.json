@@ -25,7 +25,7 @@
       "name": "Hosted workbench",
       "type": "chrome",
       "request": "launch",
-      "url": "https://enter-your-SharePoint-site/_layouts/workbench.aspx",
+      "url": "https://y365it.sharepoint.com/_layouts/workbench.aspx",
       "webRoot": "${workspaceRoot}",
       "sourceMaps": true,
       "sourceMapPathOverrides": {
@@ -38,6 +38,22 @@
         "--remote-debugging-port=9222",
         "-incognito"
       ]
-    }
+    },
+    {
+      "name": "Y365 Dev",
+      "type": "firefox",
+      "request": "launch",
+      "reAttach": true,
+      "url": "https://y365it.sharepoint.com/Shared Documents/Forms/AllItems.aspx?debugManifestsFile=https%3A%2F%2Flocalhost%3A4321%2Ftemp%2Fmanifests.js&loadSPFX=true&customActions={\"cdaa66dd-1ef6-4b33-8c44-b2aef9a049e0\"%3A{\"location\"%3A\"ClientSideExtension.ListViewCommandSet.CommandBar\"%2C\"properties\"%3A{\"sampleTextOne\"%3A\"One item is selected in the list\"%2C\"sampleTextTwo\"%3A\"This command is always visible.\"}}}",
+      "webRoot": "${workspaceRoot}",
+      "sourceMaps": "client",
+      "pathMappings": [
+          {
+              "url": "webpack:///",
+              "path": "${webRoot}/"
+          }
+      ],
+      "port": 9222
+    },
   ]
 }

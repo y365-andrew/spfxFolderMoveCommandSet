@@ -19,8 +19,6 @@ import * as strings from 'Y365FolderMoveCommandSetStrings';
  */
 export interface IY365FolderMoveCommandSetProperties {
   // This is an example; replace with your own properties
-  sampleTextOne: string;
-  sampleTextTwo: string;
 }
 
 const LOG_SOURCE: string = 'Y365FolderMoveCommandSet';
@@ -43,8 +41,8 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
     const compareOneCommand: Command = this.tryGetCommand('MOVE_FOLDER');
     if (compareOneCommand) {
       // This command should be hidden unless exactly one row is selected.
-      compareOneCommand.title = "Move Me"
-      compareOneCommand.visible = event.selectedRows.length === 1;
+      compareOneCommand.title = "Shift"
+      compareOneCommand.visible = event.selectedRows.length >= 1;
     }
   }
 
@@ -52,14 +50,9 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
   public onExecute(event: IListViewCommandSetExecuteEventParameters): void {
     switch (event.itemId) {
       case 'MOVE_FOLDER':
-        console.log("Clicked");
         const dialog = new MoveDialog();
-        dialog.show().then(() => {
-          console.log("dialog shown");
-        });
-        break;
-      case 'COMMAND_2':
-        Dialog.alert(`${this.properties.sampleTextTwo}`);
+        
+        dialog.init(this.context, event.selectedRows, this.context.pageContext.list.title);
         break;
       default:
         throw new Error('Unknown command');
