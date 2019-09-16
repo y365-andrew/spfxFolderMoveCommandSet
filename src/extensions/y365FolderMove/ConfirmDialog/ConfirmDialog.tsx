@@ -278,14 +278,14 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
         if(row.Type === 1){
           const folderName = row.Rename === true ? row.NewName : row.Name;
           const res = await sp.web.lists.getByTitle(this.props.sourceListTitle).items.getById(row.Id as number).folder.get();
-          return moveFolder(res.ServerRelativeUrl, `${this.props.destination.path}/${folderName}`, observer)
+          return moveFolder(res.UniqueId, res.ServerRelativeUrl, `${this.props.destination.path}/${folderName}`, observer)
         }
         //FILES
         else if(row.Type === 0){
           const fileName = row.Rename === true ? row.NewName : row.Name;
           const res = await sp.web.lists.getByTitle(this.props.sourceListTitle).items.getById(row.Id as number).file.get();
   
-          return moveFile(res.ServerRelativeUrl, `${this.props.destination.path}/${fileName}`, observer)
+          return moveFile(res.UniqueId, res.ServerRelativeUrl, `${this.props.destination.path}/${fileName}`, observer)
         }
       });
   

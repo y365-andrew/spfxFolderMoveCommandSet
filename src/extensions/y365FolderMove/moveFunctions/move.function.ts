@@ -21,7 +21,7 @@ export class MoveLog{
   }
 }
 
-export function moveFolder(sourceServerRelativeUrl: string, destinationServerRelativeUrl: string, logObserver?: ILogObserver): Promise<any>{
+export function moveFolder(sourceId: string, sourceServerRelativeUrl: string, destinationServerRelativeUrl: string, logObserver?: ILogObserver): Promise<any>{
   const log = new MoveLog(logObserver);
   // Create result object for debugging
   return new Promise((resolve, reject) => {
@@ -37,17 +37,17 @@ export function moveFolder(sourceServerRelativeUrl: string, destinationServerRel
       };
 
       const destinationFolderUrl = folderAddResult.data.ServerRelativeUrl;
-      const sourceFolder = sp.web.getFolderByServerRelativeUrl(sourceServerRelativeUrl);
+      const sourceFolder = sp.web.getFolderById(sourceId);
       // Get contents
       // Folders
-      sourceFolder.folders.select('ServerRelativeUrl,Name').get().then((subFolders) => {
+      sourceFolder.folders.select('ServerRelativeUrl,Name,UniqueId').get().then((subFolders) => {
         let subFolderPromises: Promise<any>[] = subFolders.map((subFolder) => {
-          return moveFolder(subFolder.ServerRelativeUrl, `${destinationFolderUrl}/${subFolder.Name}`, logObserver);
+          return moveFolder(subFolder.UniqueId, subFolder.ServerRelativeUrl, `${destinationFolderUrl}/${subFolder.Name}`, logObserver);
         });
         // Files
-        sourceFolder.files.select('ServerRelativeUrl,Name').get().then((subFiles) => {
+        sourceFolder.files.select('ServerRelativeUrl,Name,UniqueId').get().then((subFiles) => {
           let subFilePromises = subFiles.map((subFile) => {
-            return moveFile(subFile.ServerRelativeUrl, `${destinationFolderUrl}/${subFile.Name}`, logObserver);
+            return moveFile(subFile.UniqueId, subFile.ServerRelativeUrl, `${destinationFolderUrl}/${subFile.Name}`, logObserver);
           });
 
           const subPromises = [...subFolderPromises, ...subFilePromises];
@@ -111,13 +111,13 @@ export function moveFolder(sourceServerRelativeUrl: string, destinationServerRel
   });
 }
 
-export function moveFile(sourceServerRelativeUrl: string, destServerRelativeUrl: string, logObserver?: ILogObserver): Promise<any>{
+export function moveFile(sourceId: string, sourceServerRelativeUrl: string, destServerRelativeUrl: string, logObserver?: ILogObserver): Promise<any>{
   const log = new MoveLog(logObserver);
 
   return new Promise((resolve, reject) => {
     // Move file
     log.write(`Moving file ${sourceServerRelativeUrl}`)
-    sp.web.getFileByServerRelativeUrl(sourceServerRelativeUrl).moveTo(destServerRelativeUrl).then(() => {
+    sp.web.getFileById(sourceId).moveTo(destServerRelativeUrl).then(() => {
       const res = {
         file: sourceServerRelativeUrl,
         destination: destServerRelativeUrl,

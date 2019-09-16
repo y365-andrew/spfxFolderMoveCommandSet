@@ -3,7 +3,7 @@
   "solution": {
     "name": "y-365-folder-move-client-side-solution",
     "id": "8dd5c64a-d822-4e1c-b95e-187382ac9a95",
-    "version": "1.0.0.0",
+    "version": "1.0.0.2",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
@@ -12,7 +12,7 @@
         "title": "Application Extension - Deployment of custom action.",
         "description": "Deploys a custom action with ClientSideComponentId association",
         "id": "ef71ba89-70f8-4ddd-959b-64ec95af6e2f",
-        "version": "1.0.0.0",
+        "version": "1.0.0.1",
         "assets": {
           "elementManifests": [
             "elements.xml",

@@ -11,6 +11,7 @@ import MoveDialog from './MoveDialog/MoveDialog';
 import { sp } from '@pnp/sp';
 
 import * as strings from 'Y365FolderMoveCommandSetStrings';
+import { SPPermission } from '@microsoft/sp-page-context';
 
 /**
  * If your command set uses the ClientSideComponentProperties JSON input,
@@ -39,20 +40,31 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
   @override
   public onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): void {
     const compareOneCommand: Command = this.tryGetCommand('MOVE_FOLDER');
+
     if (compareOneCommand) {
-      // This command should be hidden unless exactly one row is selected.
+      const hasPermission = this.context.pageContext.list.permissions.hasPermission(SPPermission.editListItems);
+      const moreThanOneSelected = event.selectedRows.length >= 1;
+      // This command should be hidden unless move than one row is selected and the user has edit items permission on the list
       compareOneCommand.title = "Shift"
-      compareOneCommand.visible = event.selectedRows.length >= 1;
+      compareOneCommand.visible = hasPermission && moreThanOneSelected;
     }
   }
 
   @override
-  public onExecute(event: IListViewCommandSetExecuteEventParameters): void {
+  public async onExecute(event: IListViewCommandSetExecuteEventParameters): Promise<void> {
     switch (event.itemId) {
       case 'MOVE_FOLDER':
         const dialog = new MoveDialog();
-        
-        dialog.init(this.context, event.selectedRows, this.context.pageContext.list.title);
+        console.log(this.context)
+        console.log(this.context.pageContext.legacyPageContext)
+        const web = await sp.web.select('Url').get();
+        const url = window.location.href;
+        const list = url.replace(web.Url, '').split('/')[1];
+        console.log(list);
+        // Normally we'd user the below to get the list name however the context is not kept up to date when navigating across lists. https://github.com/SharePoint/sp-dev-docs/issues/1743
+        //this.context.pageContext.list.title
+
+        dialog.init(this.context, event.selectedRows, list);
         break;
       default:
         throw new Error('Unknown command');
