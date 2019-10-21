@@ -29,7 +29,9 @@ export function moveFolder(sourceId: string, sourceServerRelativeUrl: string, de
 
     log.write(`Moving folder ${sourceServerRelativeUrl}`);
     // Create folder in destination
-    sp.web.folders.add(destinationServerRelativeUrl).then((folderAddResult: FolderAddResult) => {
+    const encodedDestination = destinationServerRelativeUrl.split('/').map(v => encodeURIComponent(v)).join('/');
+    console.log(encodedDestination);
+    sp.web.folders.add(`!@p1::${encodedDestination}`).then((folderAddResult: FolderAddResult) => {
       // Add result
       result = {
         ...result, 
@@ -117,7 +119,10 @@ export function moveFile(sourceId: string, sourceServerRelativeUrl: string, dest
   return new Promise((resolve, reject) => {
     // Move file
     log.write(`Moving file ${sourceServerRelativeUrl}`)
-    sp.web.getFileById(sourceId).moveTo(destServerRelativeUrl).then(() => {
+    const encodedDestination = destServerRelativeUrl.split('/').map(v => encodeURIComponent(v)).join('/');
+    console.log(encodedDestination);
+    
+    sp.web.getFileById(sourceId).moveTo(`!@p1::${encodedDestination}`).then(() => {
       const res = {
         file: sourceServerRelativeUrl,
         destination: destServerRelativeUrl,
@@ -137,5 +142,4 @@ export function moveFile(sourceId: string, sourceServerRelativeUrl: string, dest
     })
   });
 
-  // Handle errors + retry policy
 }

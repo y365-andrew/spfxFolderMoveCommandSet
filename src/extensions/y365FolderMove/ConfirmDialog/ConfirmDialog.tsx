@@ -117,6 +117,7 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
               <div className={ styles.progressDialog }>
                 <Icon iconName="ErrorBadge" className={ styles.errorIcon } />
                 <Label>An error ocurred, please refresh the page try again or contact IT.</Label>
+                <Label>Errored during action: <i>{ this.state.log[this.state.log.length -2] }</i></Label>
                 <DialogFooter>
                   <DefaultButton text="Close" onClick={ this.props.onDismissAll } />
                 </DialogFooter>
@@ -254,7 +255,7 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
       },
       error: (err) => {
         console.log(err);
-        const log = [...this.state.log, "Error: an error occurred with the observable log, please contact IT."];
+        const log = [...this.state.log, err];
 
         this.setState({
           hasErrored: true,
