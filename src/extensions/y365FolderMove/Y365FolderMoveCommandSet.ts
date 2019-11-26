@@ -55,14 +55,16 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
     switch (event.itemId) {
       case 'MOVE_FOLDER':
         const dialog = new MoveDialog();
-        console.log(this.context)
-        console.log(this.context.pageContext.legacyPageContext)
-        const web = await sp.web.select('Url').get();
-        const url = window.location.href;
-        const list = url.replace(web.Url, '').split('/')[1];
-        console.log(list);
-        // Normally we'd user the below to get the list name however the context is not kept up to date when navigating across lists. https://github.com/SharePoint/sp-dev-docs/issues/1743
-        //this.context.pageContext.list.title
+        //console.log(this.context)
+        //console.log(this.context.pageContext.legacyPageContext)
+        //const web = await sp.web.select('Url').get();
+        //const url = window.location.href;
+        const list = this.context.pageContext.list.title;
+        // console.log(list);
+        // Normally we'd use the below to get the list name however the context is not kept up to date when navigating across lists. https://github.com/SharePoint/sp-dev-docs/issues/1743
+        // this.context.pageContext.list.title
+        // Except this causes issues loading the list if it's title is different to it's path
+        // const list = url.replace(web.Url, '').split('/')[1];
 
         dialog.init(this.context, event.selectedRows, list);
         break;

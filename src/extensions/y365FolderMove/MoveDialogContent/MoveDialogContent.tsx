@@ -132,6 +132,7 @@ export default class MoveDialogContent extends React.Component<IMoveDialogConten
 
     const selectedRowsWithPropsPromise: Promise<ISelectedRowProps>[] = selectedRows.map(async (row) => {
       const Id = row.getValueByName('ID');
+      console.log(Id)
       const res: any = await sp.web.lists.getByTitle(this.props.sourceListTitle).items.getById(Id).select('Title, FieldValuesAsText/FileLeafRef,FileSystemObjectType').expand('FieldValuesAsText').get();
 
       const Name = res.FieldValuesAsText ? res.FieldValuesAsText.FileLeafRef : res.Title;
@@ -145,7 +146,7 @@ export default class MoveDialogContent extends React.Component<IMoveDialogConten
     });
 
     const selectedRowsWithProps: ISelectedRowProps[] = await Promise.all(selectedRowsWithPropsPromise);
-
+    console.log(selectedRowsWithProps);
     this.setState({
       selectedRowsWithProps
     });
