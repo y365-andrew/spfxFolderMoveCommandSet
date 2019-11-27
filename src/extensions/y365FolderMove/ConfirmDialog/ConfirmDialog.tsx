@@ -10,7 +10,7 @@ import { Spinner } from 'office-ui-fabric-react/lib/Spinner';
 import { sp, Folder, SPBatch } from '@pnp/sp';
 
 import { ISelectedItem, ISelectedRowProps } from '../MoveDialogContent/MoveDialogContent';
-import { moveFile, moveFolder } from '../moveFunctions/move.function';
+import { moveFile, moveFolder, moveFolder2, moveOrchestrator } from '../moveFunctions/move.function';
 import styles from './ConfirmDialog.module.scss';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 
@@ -279,7 +279,7 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
         if(row.Type === 1){
           const folderName = row.Rename === true ? row.NewName : row.Name;
           const res = await sp.web.lists.getByTitle(this.props.sourceListTitle).items.getById(row.Id as number).folder.get();
-          return moveFolder(res.UniqueId, res.ServerRelativeUrl, `${this.props.destination.path}/${folderName}`, observer)
+          return moveOrchestrator(res.UniqueId, res.ServerRelativeUrl, `${this.props.destination.path}/${folderName}`, observer)
         }
         //FILES
         else if(row.Type === 0){
