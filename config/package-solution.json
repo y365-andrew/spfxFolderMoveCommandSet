@@ -1,9 +1,9 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
   "solution": {
-    "name": "y-365-folder-move-client-side-solution",
+    "name": "Y365 File Shift Utility",
     "id": "8dd5c64a-d822-4e1c-b95e-187382ac9a95",
-    "version": "1.1.0.0",
+    "version": "1.2.2.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
