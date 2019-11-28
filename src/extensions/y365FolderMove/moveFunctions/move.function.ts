@@ -1,6 +1,6 @@
 import { sp, FolderAddResult, Files, SPBatch } from '@pnp/sp';
 import { Observable, of } from 'rxjs';
-import { concat } from 'rxjs/operators';
+import { concat, retry } from 'rxjs/operators';
 import { Queryable } from '@pnp/odata';
 
 export interface ILogObserver{
@@ -114,35 +114,75 @@ export function moveFolder(sourceId: string, sourceServerRelativeUrl: string, de
   });
 }
 
-export function moveFile(sourceId: string, sourceServerRelativeUrl: string, destServerRelativeUrl: string, logObserver?: ILogObserver): Promise<any>{
+export async function moveFile(sourceId: string, sourceServerRelativeUrl: string, destServerRelativeUrl: string, logObserver: ILogObserver, retryCount?: number): Promise<any>{
   const log = new MoveLog(logObserver);
-
-  return new Promise((resolve, reject) => {
-    // Move file
-    log.write(`Moving file ${sourceServerRelativeUrl}`)
-    const encodedDestination = destServerRelativeUrl.split('/').map(v => encodeURIComponent(v).replace(/\'/g, "%27%27")).join('/');
-    console.log(encodedDestination);
-    
-    sp.web.getFileById(sourceId).moveTo(`!@p1::${encodedDestination}`).then(() => {
-      const res = {
-        file: sourceServerRelativeUrl,
-        destination: destServerRelativeUrl,
-        moved: true
+  // Move file
+  log.write(`Moving file ${sourceServerRelativeUrl}`)
+  const encodedDestination = destServerRelativeUrl.split('/').map(v => encodeURIComponent(v).replace(/\'/g, "%27%27")).join('/');
+  console.log(encodedDestination);
+  
+  try{
+    const fileMoveRes = sp.web.getFileById(sourceId).moveTo(`!@p1::${encodedDestination}`);
+    const res = {
+      file: sourceServerRelativeUrl,
+      destination: destServerRelativeUrl,
+      moved: true,
+      fileMoveRes
+    }
+    return res;
+  }
+  catch(err){
+    const newRetryCount = (retryCount || 0) + 1;
+    console.log(err);
+    if(newRetryCount > 5){
+      throw new Error(`Retry count exceeded, error moving folder. Error message: ${err && err.Message ? err.Message : "Unknown"}`)
+    }
+    else{
+      if(err && err.status){
+        switch(err.status){
+          //Server error
+          case "500":{
+            console.log("Retrying due to throttling", err);
+            const retryRes = await new Promise((resolve, reject) => {
+              setTimeout(async () => {
+                const res = await moveFile(sourceId, sourceServerRelativeUrl ,destServerRelativeUrl, logObserver, newRetryCount);
+                resolve(res);
+              }, 100)
+            });
+            return retryRes;
+          }
+          //Throttle cases
+          case "503":
+          case "429":{
+            console.log("Retrying due to throttling", err);
+            const retryRes = await new Promise((resolve, reject) => {
+              setTimeout(async () => {
+                const res = await moveFile(sourceId, sourceServerRelativeUrl ,destServerRelativeUrl, logObserver, newRetryCount);
+                resolve(res);
+              }, 10000)
+            });
+            return retryRes;
+          }
+          //Other
+          default:{
+            throw new Error(err)
+          }
+        }
       }
+      else{
+        log.write(`Moving file: ${sourceServerRelativeUrl}`);
+        console.log("Retrying due to unknown error code", err);
+        const retryRes = await new Promise((resolve, reject) => {
+          setTimeout(async () => {
+            const res = await moveFile(sourceId, sourceServerRelativeUrl ,destServerRelativeUrl, logObserver, newRetryCount);
+            resolve(res);
+          }, 500)
+        });
 
-      resolve(res);
-    }).catch((fileMoveErr) => {
-      const res = {
-        file: sourceServerRelativeUrl,
-        destination: destServerRelativeUrl,
-        moved: false,
-        fileMoveErr
+        return retryRes;
       }
-
-      reject(res);
-    })
-  });
-
+    }
+  }
 }
 
 export async function moveFolder2(sourceFolderId: string, sourceServerRelativeUrl: string, destinationServerRelativeUrl: string, logObserver: ILogObserver, requestCount?: number): Promise<any>{
@@ -246,7 +286,7 @@ export async function moveFilesAsBatch(sourceId: string, sourceServerRelativeUrl
   }
   catch(err){
     const newRetryCount = (retryCount || 0) + 1;
-    console.log(err);
+    console.log(newRetryCount, err);
     if(newRetryCount > 5){
       throw new Error(`Retry count exceeded, error moving folder. Error message: ${err && err.Message ? err.Message : "Unknown"}`)
     }
@@ -258,10 +298,11 @@ export async function moveFilesAsBatch(sourceId: string, sourceServerRelativeUrl
             console.log("Retrying due to throttling", err);
             const retryRes = await new Promise((resolve, reject) => {
               setTimeout(async () => {
-                const res = await moveFilesAsBatch(folderId, destinationPath, logObserver,newRetryCount);
+                const res = await moveFile(sourceId, sourceServerRelativeUrl ,destServerRelativeUrl, logObserver, newRetryCount);
                 resolve(res);
               }, 100)
             });
+            return retryRes;
           }
           //Throttle cases
           case "503":
@@ -269,10 +310,11 @@ export async function moveFilesAsBatch(sourceId: string, sourceServerRelativeUrl
             console.log("Retrying due to throttling", err);
             const retryRes = await new Promise((resolve, reject) => {
               setTimeout(async () => {
-                const res = await createFolderInDestination(folderId, destinationPath,logObserver, newRetryCount);
+                const res = await moveFile(sourceId, sourceServerRelativeUrl ,destServerRelativeUrl, logObserver, newRetryCount);
                 resolve(res);
               }, 10000)
             });
+            return retryRes;
           }
           //Other
           default:{
@@ -281,8 +323,16 @@ export async function moveFilesAsBatch(sourceId: string, sourceServerRelativeUrl
         }
       }
       else{
-        log.write(`Error moving file: ${sourceServerRelativeUrl}`);
-        throw new Error(err);
+        log.write(`Moving file: ${sourceServerRelativeUrl}`);
+        console.log("Retrying due to unknown error code", err);
+        const retryRes = await new Promise((resolve, reject) => {
+          setTimeout(async () => {
+            const res = await moveFile(sourceId, sourceServerRelativeUrl ,destServerRelativeUrl, logObserver, newRetryCount);
+            resolve(res);
+          }, 500)
+        });
+
+        return retryRes;
       }
     }
 /*
@@ -394,10 +444,11 @@ export async function createFolderInDestination(folderId, destinationPath: strin
               console.log("Retrying due to throttling", err);
               const retryRes = await new Promise((resolve, reject) => {
                 setTimeout(async () => {
-                  const res = await createFolderInDestination(folderId, destinationPath, logObserver,newRetryCount);
+                  const res = await createFolderInDestination(folderId, destinationPath, logObserver, newRetryCount);
                   resolve(res);
                 }, 100)
               });
+              return retryRes;
             }
             //Throttle cases
             case "503":
@@ -405,10 +456,11 @@ export async function createFolderInDestination(folderId, destinationPath: strin
               console.log("Retrying due to throttling", err);
               const retryRes = await new Promise((resolve, reject) => {
                 setTimeout(async () => {
-                  const res = await createFolderInDestination(folderId, destinationPath,logObserver, newRetryCount);
+                  const res = await createFolderInDestination(folderId, destinationPath, logObserver, newRetryCount);
                   resolve(res);
                 }, 10000)
               });
+              return retryRes;
             }
             //Other
             default:{
@@ -417,7 +469,15 @@ export async function createFolderInDestination(folderId, destinationPath: strin
           }
         }
         else{
-          throw new Error(err);
+          console.log("Retrying due to unknown error code", err);
+          const retryRes = await new Promise((resolve, reject) => {
+            setTimeout(async () => {
+              const res = await createFolderInDestination(folderId, destinationPath, logObserver,newRetryCount);
+              resolve(res);
+            }, 500)
+          });
+
+          return retryRes;
         }
       }
     }

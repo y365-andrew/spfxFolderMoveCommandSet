@@ -238,7 +238,7 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
   private subscribeLog = () => {
     this.log$.subscribe({
       next: (nextVal) => {
-        console.log(nextVal);
+        //console.log(nextVal);
 
         const log = [...this.state.log, nextVal];
         this.setState({
