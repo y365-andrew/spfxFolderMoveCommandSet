@@ -46,6 +46,7 @@ export interface IMoveDialogContentState{
   libraries?: IDropdownOption[];
   selectedFolder?: ISelectedItem;
   selectedLibrary?: ISelectedItem;
+  selectedSite?: string;
   selectedRowsWithProps?: ISelectedRowProps[];
   confirmIsOpen: boolean;
 }
@@ -89,6 +90,13 @@ export default class MoveDialogContent extends React.Component<IMoveDialogConten
           <h1>Move Item</h1>
           <p>Use the below controls to move this folder.</p>
           <h2>Destination Library</h2>
+          {/*}
+          <div>
+            <span>Site: </span>
+            <Link >Change</Link>
+          </div>
+          <TextField />
+          */}
           {
             this.state.libraries && this.state.libraries.length > 0 && (
               <Dropdown options={ this.state.libraries } onChanged={ this.onLibrarySelected } />
