@@ -10,3 +10,19 @@
 .primaryButton{
   background-color: "[theme: themePrimary, default: #0078d7]";
 }
+
+.destinationSiteContainer{
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+}
+
+.destinationLibraryHeaderFlexContainer{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  
+  h2{
+    flex-grow: 1;
+  }
+}

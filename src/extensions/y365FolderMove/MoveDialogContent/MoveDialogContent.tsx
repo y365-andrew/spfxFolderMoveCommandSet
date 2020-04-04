@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import ChangeSiteDialog from '../ChangeSiteDialog/ChangeSiteDialog';
 import { BaseDialog, IDialogConfiguration, Dialog } from '@microsoft/sp-dialog';
 import { RowAccessor, ListViewCommandSetContext } from '@microsoft/sp-listview-extensibility';
 
@@ -12,7 +13,7 @@ import { DetailsList, IColumn } from 'office-ui-fabric-react/lib/DetailsList';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Link } from 'office-ui-fabric-react/lib/Link';
-import { sp, Files, Item } from '@pnp/sp';
+import { sp, IWeb, Files, Item } from '@pnp/sp/presets/all';
 
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 
@@ -41,24 +42,30 @@ export interface IMoveDialogContentProps{
 export interface IMoveDialogContentState{
   crumbs?: IBreadcrumbItem[];
   currentFolderContents?: any[];
+  changeSiteDialogOpen: boolean;
+  destinationSiteName?: string;
   filteredFolderContents?: any[];
   searchTerm?: string;
   libraries?: IDropdownOption[];
   selectedFolder?: ISelectedItem;
   selectedLibrary?: ISelectedItem;
-  selectedSite?: string;
   selectedRowsWithProps?: ISelectedRowProps[];
   confirmIsOpen: boolean;
 }
 
 export default class MoveDialogContent extends React.Component<IMoveDialogContentProps, IMoveDialogContentState>{
   private currentFolderColumns: IColumn[];
+  private destinationWeb: IWeb;
 
   constructor(props: IMoveDialogContentProps){
     super(props);
 
+    this.destinationWeb = sp.web;
+
     this.state = {
-      confirmIsOpen: false
+      confirmIsOpen: false,
+      changeSiteDialogOpen: false,
+      destinationSiteName: "Current site"
     };
 
     this.currentFolderColumns = [{
@@ -86,17 +93,20 @@ export default class MoveDialogContent extends React.Component<IMoveDialogConten
   public render(): JSX.Element{
     return (
       <DialogContent onDismiss={ this.props.onDismiss } showCloseButton={ true } >
+        <small>v1.3.3.7 (dev)</small>
         <div className={ styles.dialogBody }>
           <h1>Move Item</h1>
           <p>Use the below controls to move this folder.</p>
-          <h2>Destination Library</h2>
-          {/*}
-          <div>
-            <span>Site: </span>
-            <Link >Change</Link>
+          <div className={ styles.destinationLibraryHeaderFlexContainer }>
+            <h2>Destination Library</h2>
+
+            <div className={ styles.destinationSiteContainer }>
+              <span><Icon iconName="SharepointLogo"/> { this.state.destinationSiteName } </span>
+              <Link onClick={ () => this.onChangeSiteLinkClicked() } >[Change]</Link>
+              <ChangeSiteDialog isOpen={ this.state.changeSiteDialogOpen } onDismiss={ () => this.onChangeSiteDialogDismissed() } onSelectWeb={ (web) => this.onDestinationWebSelected(web) } />
+            </div>
           </div>
-          <TextField />
-          */}
+
           {
             this.state.libraries && this.state.libraries.length > 0 && (
               <Dropdown options={ this.state.libraries } onChanged={ this.onLibrarySelected } />
@@ -130,7 +140,7 @@ export default class MoveDialogContent extends React.Component<IMoveDialogConten
           <DefaultButton text="Cancel" onClick={ this.props.onDismiss } />
           <PrimaryButton text="Move" className={ styles.primaryButton } onClick={ this.showConfirmation } />
         </DialogFooter>
-        <ConfirmDialog isOpen={ this.state.confirmIsOpen } onDismiss={ () => this.setState({ confirmIsOpen: false }) } onDismissAll={ this.props.onDismiss } selectedRows={ this.state.selectedRowsWithProps } destination={ this.state.selectedFolder ? this.state.selectedFolder : this.state.selectedLibrary } sourceListTitle={ this.props.sourceListTitle }/>
+        <ConfirmDialog isOpen={ this.state.confirmIsOpen } onDismiss={ () => this.setState({ confirmIsOpen: false }) } onDismissAll={ this.props.onDismiss } selectedRows={ this.state.selectedRowsWithProps } destination={ this.state.selectedFolder ? this.state.selectedFolder : this.state.selectedLibrary } sourceListTitle={ this.props.sourceListTitle } destinationWeb={ this.destinationWeb } context= { this.props.context }/>
       </DialogContent>
     )
   }
@@ -226,7 +236,7 @@ export default class MoveDialogContent extends React.Component<IMoveDialogConten
   }
 
   private getLibraries = async () => {
-    const librariesRes = await sp.web.lists.filter(`BaseType eq 1 and Hidden eq false and IsCatalog eq false`).select(`Title,Id,RootFolder/ServerRelativeUrl`).expand('RootFolder').get();
+    const librariesRes = await this.destinationWeb.lists.filter(`BaseType eq 1 and Hidden eq false and IsCatalog eq false`).select(`Title,Id,RootFolder/ServerRelativeUrl`).expand('RootFolder').get();
     const libraries: IDropdownOption[] = librariesRes.map(v => { return { key: v.Id, text: v.Title, data: v.RootFolder ? v.RootFolder.ServerRelativeUrl : null }} );
 
     this.setState({
@@ -235,7 +245,7 @@ export default class MoveDialogContent extends React.Component<IMoveDialogConten
   }
 
   private getCurrentFolderContents = async (folderPath) => {
-    const subFolders = await sp.web.getFolderByServerRelativeUrl(folderPath).folders.select(`Name,ServerRelativeUrl,ListItemAllFields/ID`).expand('ListItemAllFields').filter('ListItemAllFields ne null').orderBy('Name').get();
+    const subFolders = await this.destinationWeb.getFolderByServerRelativeUrl(folderPath).folders.select(`Name,ServerRelativeUrl,ListItemAllFields/ID`).expand('ListItemAllFields').filter('ListItemAllFields ne null').orderBy('Name').get();
     const currentFolderContents = subFolders;
 
     this.setState({
@@ -273,6 +283,31 @@ export default class MoveDialogContent extends React.Component<IMoveDialogConten
     this.setState({
       confirmIsOpen: true
     });
+  }
+
+  private onChangeSiteLinkClicked(){
+    this.setState({
+      changeSiteDialogOpen: true
+    });
+  }
+
+  private onChangeSiteDialogDismissed(){
+    this.setState({
+      changeSiteDialogOpen: false
+    });
+  }
+
+  private async onDestinationWebSelected(newWeb: IWeb){
+    this.destinationWeb = newWeb;
+    const destinationSiteName = (await newWeb.select("Url").get()).Url
+
+    this.setState({
+      changeSiteDialogOpen: false,
+      libraries: null,
+      destinationSiteName
+    });
+
+    this.getLibraries();
   }
 
 }

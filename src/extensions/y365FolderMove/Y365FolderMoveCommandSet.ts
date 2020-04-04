@@ -8,8 +8,7 @@ import {
 } from '@microsoft/sp-listview-extensibility';
 import { Dialog } from '@microsoft/sp-dialog';
 import MoveDialog from './MoveDialog/MoveDialog';
-import { sp } from '@pnp/sp';
-
+import { setup as pnpSetup } from '@pnp/common';
 import * as strings from 'Y365FolderMoveCommandSetStrings';
 import { SPPermission } from '@microsoft/sp-page-context';
 
@@ -30,7 +29,7 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
   public onInit(): Promise<void> {    
     Log.info(LOG_SOURCE, 'Initialized Y365FolderMoveCommandSet');
 
-    sp.setup({
+    pnpSetup({
       spfxContext: this.context
     });
 
@@ -55,7 +54,7 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
     switch (event.itemId) {
       case 'MOVE_FOLDER':
         const dialog = new MoveDialog();
-        //console.log(this.context)
+        console.log(this.context)
         //console.log(this.context.pageContext.legacyPageContext)
         //const web = await sp.web.select('Url').get();
         //const url = window.location.href;

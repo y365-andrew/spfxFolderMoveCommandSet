@@ -7,12 +7,17 @@ import { Toggle } from 'office-ui-fabric-react/lib/Toggle';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { DetailsList, IColumn, SelectionMode,DetailsRow } from 'office-ui-fabric-react/lib/DetailsList';
 import { Spinner } from 'office-ui-fabric-react/lib/Spinner';
-import { sp, Folder, SPBatch } from '@pnp/sp';
+import { sp, Folder, SPBatch, Web, IWeb } from '@pnp/sp/presets/all';
+import { SPHttpClient, SPHttpClientConfiguration, ISPHttpClientOptions } from '@microsoft/sp-http';
+import { IFetchOptions } from '@pnp/common';
+import { AdalClient } from '@pnp/adaljsclient'
+import { ODataParser } from "@pnp/odata";
 
 import { ISelectedItem, ISelectedRowProps } from '../MoveDialogContent/MoveDialogContent';
-import { moveFile, moveFolder, moveFolder2, moveOrchestrator } from '../moveFunctions/move.function';
+import { moveFile, moveFolder, moveFolder2, moveOrchestrator, moveFilesAsCopyJob, ILogNextData, ELogNextDataMsgType, moveFilesAndMerge } from '../moveFunctions/move.function';
 import styles from './ConfirmDialog.module.scss';
 import { Label } from 'office-ui-fabric-react/lib/Label';
+import { ListViewCommandSetContext } from '@microsoft/sp-listview-extensibility';
 
 export interface IConfirmSelectedRowProps extends ISelectedRowProps{
   Exists: boolean;
@@ -22,11 +27,13 @@ export interface IConfirmSelectedRowProps extends ISelectedRowProps{
 
 export interface IConfirmDialogProps{
   isOpen: boolean;
+  context: ListViewCommandSetContext;
   onDismiss: () => void;
   onDismissAll: () => void;
   selectedRows: ISelectedRowProps[];
   destination: ISelectedItem;
   sourceListTitle: string;
+  destinationWeb: IWeb;
 }
 
 export interface IConfirmDialogState{
@@ -38,11 +45,13 @@ export interface IConfirmDialogState{
   hasErrored: boolean;
   hasCompleted: boolean;
   log: string[];
+  logProgressExpected?: string;
+  logProgressProcessed?: string;
 }
 
 export default class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogState>{
   private columns: IColumn[];
-  private log$: Observable<string>;
+  private log$: Observable<string | ILogNextData>;
 
   constructor(props: IConfirmDialogProps){
     super(props);
@@ -100,7 +109,14 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
         <Dialog isOpen={ this.state.isWorking || this.state.hasCompleted || this.state.hasErrored } isBlocking={ true } >
           {
             this.state.isWorking && (
-              <Spinner label={ this.state.log[this.state.log.length -1] } />
+              <div>
+                <Spinner label={ this.state.log[this.state.log.length -1] } />
+                {
+                  this.state.logProgressExpected && this.state.logProgressProcessed && (
+                    <p>Migrated { this.state.logProgressProcessed } of { this.state.logProgressExpected }</p>
+                  )
+                }
+              </div>
             )
           }{
             this.state.hasCompleted && (
@@ -210,7 +226,7 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
     const selectedRowsWithPropsPromise = itemsToMove.map(async (item) => {
 
       try{
-        const exists = item.Type === 1 ? await sp.web.getFolderByServerRelativeUrl(`${destination.path}/${item.Name}`).get() : await sp.web.getFileByServerRelativeUrl(`${destination.path}/${item.Name}`).get();
+        const exists = item.Type === 1 ? await this.props.destinationWeb.getFolderByServerRelativeUrl(`${destination.path}/${item.Name}`).get() : await this.props.destinationWeb.getFileByServerRelativeUrl(`${destination.path}/${item.Name}`).get();
         
         return {
           ...item,
@@ -237,13 +253,23 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
 
   private subscribeLog = () => {
     this.log$.subscribe({
-      next: (nextVal) => {
-        //console.log(nextVal);
+      next: (nextVal: ILogNextData) => {
 
-        const log = [...this.state.log, nextVal];
-        this.setState({
-          log
-        });
+        if(nextVal.msg){
+          const log = [...this.state.log, nextVal.msg];
+          this.setState({
+            log,
+            logProgressExpected: null,
+            logProgressProcessed: null
+          });
+        }
+
+        if(nextVal.msgType === ELogNextDataMsgType.Progress){
+          this.setState({
+            logProgressExpected: nextVal.objectsExpected,
+            logProgressProcessed: nextVal.objectsProcessed
+          });
+        }
       },
       complete: () => {
         const log = [...this.state.log, "Items move successfully!!"];
@@ -271,28 +297,35 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
       isWorking: true
     });
 
-    this.log$ = Observable.create((observer) => {
-      observer.next("Initialising item shift.");
+    this.log$ = new Observable<ILogNextData>((observer) => {
+      observer.next({ msgType: ELogNextDataMsgType.Log, msg: "Initialising item shift." });
 
       const promises = this.state.selectedRowsWithProps.map(async (row) => {
         // FOLDERS
         if(row.Type === 1){
           const folderName = row.Rename === true ? row.NewName : row.Name;
           const res = await sp.web.lists.getByTitle(this.props.sourceListTitle).items.getById(row.Id as number).folder.get();
-          return moveOrchestrator(res.UniqueId, res.ServerRelativeUrl, `${this.props.destination.path}/${folderName}`, observer)
+
+          //return moveOrchestrator(this.props.context, res.UniqueId, res.ServerRelativeUrl, `${this.props.destination.path}/${folderName}`, this.props.destinationWeb, observer)
+          if(row.Exists){
+            return moveFilesAndMerge(this.props.context, res.UniqueId, this.props.destination.path, this.props.destinationWeb, observer);
+          }
+          else{
+            return moveFilesAsCopyJob(this.props.context, res.UniqueId, false, this.props.destination.path, observer);
+          }
         }
         //FILES
         else if(row.Type === 0){
           const fileName = row.Rename === true ? row.NewName : row.Name;
           const res = await sp.web.lists.getByTitle(this.props.sourceListTitle).items.getById(row.Id as number).file.get();
-  
-          return moveFile(res.UniqueId, res.ServerRelativeUrl, `${this.props.destination.path}/${fileName}`, observer)
+
+          return moveFilesAsCopyJob(this.props.context, res.UniqueId, true, this.props.destination.path, observer);
+          //return moveFile(res.UniqueId, res.ServerRelativeUrl, `${this.props.destination.path}/${fileName}`, observer)
         }
       });
   
       Promise.all(promises).then((res) => {
-        console.log("promises finished");
-        observer.complete("Items moved successfully!");
+        observer.complete();
         console.log(res);
       }).catch((err) => {
         console.log("promises errored");

@@ -4,7 +4,7 @@
   "https": true,
   "serveConfigurations": {
     "default": {
-      "pageUrl": "https://ducon365.sharepoint.com/sites/intranet/projects/Current%20Bids/Forms/AllItems.aspx",
+      "pageUrl": "https://y365it.sharepoint.com/sites/test/Shared Documents/Forms/AllItems.aspx",
       "customActions": {
         "cdaa66dd-1ef6-4b33-8c44-b2aef9a049e0": {
           "location": "ClientSideExtension.ListViewCommandSet.CommandBar",
@@ -14,7 +14,7 @@
       }
     },
     "y365FolderMove": {
-      "pageUrl": "https://ducon365.sharepoint.com/sites/intranet/projects/Current%20Bids/Forms/AllItems.aspx?loadSPFX=true&debugManifestsFile=https://localhost:4321/temp/manifests.js",
+      "pageUrl": "https://y365it.sharepoint.com/sites/test/Shared Documents/Forms/AllItems.aspx?loadSPFX=true&debugManifestsFile=https://localhost:4321/temp/manifests.js",
       "customActions": {
         "cdaa66dd-1ef6-4b33-8c44-b2aef9a049e0": {
           "location": "ClientSideExtension.ListViewCommandSet.CommandBar",

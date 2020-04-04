@@ -1,0 +1,9 @@
+.siteUrlFlexContainer{
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+
+    &:first-child{
+        flex-grow: 1
+    }
+}
