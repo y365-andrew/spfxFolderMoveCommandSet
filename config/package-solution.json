@@ -3,7 +3,7 @@
   "solution": {
     "name": "Y365 File Shift Utility",
     "id": "8dd5c64a-d822-4e1c-b95e-187382ac9a95",
-    "version": "1.3.3.7",
+    "version": "1.3.4.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
@@ -19,6 +19,12 @@
             "clientsideinstance.xml"
           ]
         }
+      }
+    ],
+    "webApiPermissionRequests": [
+      {
+      "resource": "Microsoft Graph",
+      "scope": "Files.ReadWrite.All"
       }
     ]
   },

@@ -47,7 +47,7 @@ export default class ChangeSiteDialog extends React.Component<IChangeSiteDialogP
     render(){
         return (
             <Dialog isBlocking={ true } title="Select Destination Site" onDismiss={ this.props.onDismiss } isOpen={ this.props.isOpen }>
-                <Dropdown options={[{ key: "onedrive", text: "OneDrive"},{key: "sharepoint", text:"SharePoint" }]} label="Destination Type" onChanged={ (val) => this.onDestinationTypeChange(val) } />
+                <Dropdown options={[{ key: "onedrive", text: "OneDrive"},{key: "sharepoint", text:"SharePoint" }]} label="Destination Type" onChanged={ (val) => this.onDestinationTypeChange(val) } selectedKey={ EDestinationType[this.state.destinationType] } />
                 {
                     this.state.destinationType === EDestinationType.sharepoint && (
                         <TextField label="Site URL" value={ this.state.siteUrlFieldValue } onChange={ (e, val) => this.onTextFieldChange(val) } onGetErrorMessage={ (val) => this.onTextFieldGetErrorMessage(val) } />
@@ -133,7 +133,7 @@ export default class ChangeSiteDialog extends React.Component<IChangeSiteDialogP
 
             case EDestinationType.onedrive: {
                 try {
-                    console.log(await graph.me.get());
+                    //console.log(await graph.me.get());
                     const testWeb = graph.users.getById(this.state.onedriveUpnValue).drive;
                     const isValid = await testWeb.get();
                     // ts-lint:disable-next-line
