@@ -20,6 +20,11 @@
       "title": { "default": "Shift" },
       "iconImageUrl": "https://img.icons8.com/pastel-glyph/64/000000/truck.png",
       "type": "command"
+    },
+    "SHOW_PROGRESS": {
+      "title":{ "default": "View shift progress" },
+      "iconImageUrl": "https://img.icons8.com/pastel-glyph/64/000000/line-chart.png",
+      "type": "command"
     }
   }
 }

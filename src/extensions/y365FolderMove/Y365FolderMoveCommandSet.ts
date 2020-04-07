@@ -8,6 +8,7 @@ import {
 } from '@microsoft/sp-listview-extensibility';
 import { Dialog } from '@microsoft/sp-dialog';
 import MoveDialog from './MoveDialog/MoveDialog';
+import ProgressPanelHost from './ProgressPanelHost/ProgressPanelHost';
 import { setup as pnpSetup } from '@pnp/common';
 import * as strings from 'Y365FolderMoveCommandSetStrings';
 import { SPPermission } from '@microsoft/sp-page-context';
@@ -24,6 +25,7 @@ export interface IY365FolderMoveCommandSetProperties {
 const LOG_SOURCE: string = 'Y365FolderMoveCommandSet';
 
 export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY365FolderMoveCommandSetProperties> {
+  private progressPanelHost: ProgressPanelHost;
 
   @override
   public onInit(): Promise<void> {    
@@ -32,6 +34,8 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
     pnpSetup({
       spfxContext: this.context
     });
+
+    this.progressPanelHost = new ProgressPanelHost(this.context);
 
     return Promise.resolve();
   }
@@ -54,7 +58,6 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
     switch (event.itemId) {
       case 'MOVE_FOLDER':
         const dialog = new MoveDialog();
-        console.log(this.context)
         //console.log(this.context.pageContext.legacyPageContext)
         //const web = await sp.web.select('Url').get();
         //const url = window.location.href;
@@ -66,6 +69,9 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
         // const list = url.replace(web.Url, '').split('/')[1];
 
         dialog.init(this.context, event.selectedRows, list);
+        break;
+      case 'SHOW_PROGRESS':
+        this.progressPanelHost.show();
         break;
       default:
         throw new Error('Unknown command');

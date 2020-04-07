@@ -610,14 +610,16 @@ export async function moveFilesAsCopyJob(context: ListViewCommandSetContext, sou
   const sourceObject = isFile ? await sp.web.getFileById(sourceObjectId).select('ServerRelativeUrl,Name,UniqueId').get() : await sp.web.getFolderById(sourceObjectId).select('ServerRelativeUrl,Name,UniqueId').get();
   const exportObjectUri =  `${siteUrl}${sourceObject.ServerRelativeUrl}`; //subFolders.map((folder) => `${siteUrl}${folder.ServerRelativeUrl}`);
 
+  const destinationUri = (destinationPath.match(/(https:\/\/).+/g) && destinationPath.match(/(https:\/\/).+/g).length >= 0) ? destinationPath : `${siteUrl}${destinationPath}`;
+
   const body = {
     exportObjectUris: [exportObjectUri],
-    destinationUri: `${siteUrl}${destinationPath}`,
+    destinationUri,
     options: {
       IgnoreVersionHistory: false,
       IsMoveMode: true,
       AllowSchemaMismatch: true,
-      NameConflictBehavior: 2 // 0 = Fail, 1 = Replace, 2 = Rename -- add a UI element for this later
+      NameConflictBehavior: 0 // 0 = Fail, 1 = Replace, 2 = Rename -- add a UI element for this later
     }
   }
 
@@ -689,10 +691,10 @@ export async function getCopyJobProgress(context: ListViewCommandSetContext, sit
       const logObj = JSON.parse(jobProgress.Logs[i]);
       switch(logObj.Event){
         case "JobFatalError":{
-          throw new Error(logObj.Event.Message)
+          throw new Error(logObj.Message)
         }
         case "JobError":{
-          log.write(logObj.Event.Message);
+          log.write(logObj.Message);
           break;
         }
         case "JobQueued": {
@@ -708,7 +710,7 @@ export async function getCopyJobProgress(context: ListViewCommandSetContext, sit
           break;
         }
         case "JobProgress":{
-          log.writeProgress(logObj.Event.ObjectsProcessed, logObj.Event.TotalExpectedSPObjects);
+          log.writeProgress(logObj.ObjectsProcessed, logObj.TotalExpectedSPObjects);
           break;
         }
         case "JobStart": {
@@ -756,11 +758,11 @@ export async function getCopyJobProgress(context: ListViewCommandSetContext, sit
 
           switch(logObj.MigrationDirection){
             case "Export": {
-              log.write(`Export completed. Processed ${ logObj.Event.ObjectsProcessed } objects (${ logObj.Event.BytesProcessed } bytes) in ${ logObj.Event.TotalDurationInMs }`);
+              log.write(`Export completed. Processed ${ logObj.ObjectsProcessed } objects (${ logObj.BytesProcessed } bytes) in ${ logObj.TotalDurationInMs }`);
               break;
             }
             case "Import": {
-              log.write(`Import completed. Processed ${ logObj.Event.ObjectsProcessed } objects (${ logObj.Event.BytesProcessed } bytes) in ${ logObj.Event.TotalDurationInMs }`);
+              log.write(`Import completed. Processed ${ logObj.ObjectsProcessed } objects (${ logObj.BytesProcessed } bytes) in ${ logObj.TotalDurationInMs }`);
               break;
             }
             case "MoveCleanup":

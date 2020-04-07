@@ -1,6 +1,6 @@
 {
   "@microsoft/generator-sharepoint": {
-    "version": "1.8.2",
+    "version": "1.10.0",
     "libraryName": "y-365-folder-move",
     "libraryId": "8dd5c64a-d822-4e1c-b95e-187382ac9a95",
     "environment": "spo",

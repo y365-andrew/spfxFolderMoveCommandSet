@@ -12,6 +12,7 @@ import { SPHttpClient, SPHttpClientConfiguration, ISPHttpClientOptions } from '@
 import { IFetchOptions } from '@pnp/common';
 import { AdalClient } from '@pnp/adaljsclient'
 import { ODataParser } from "@pnp/odata";
+import { IDrive } from '@pnp/graph/onedrive';
 
 import { ISelectedItem, ISelectedRowProps } from '../MoveDialogContent/MoveDialogContent';
 import { moveFile, moveFolder, moveFolder2, moveOrchestrator, moveFilesAsCopyJob, ILogNextData, ELogNextDataMsgType, moveFilesAndMerge } from '../moveFunctions/move.function';
@@ -33,7 +34,7 @@ export interface IConfirmDialogProps{
   selectedRows: ISelectedRowProps[];
   destination: ISelectedItem;
   sourceListTitle: string;
-  destinationWeb: IWeb;
+  destinationWeb: IWeb | IDrive;
 }
 
 export interface IConfirmDialogState{
@@ -226,7 +227,8 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
     const selectedRowsWithPropsPromise = itemsToMove.map(async (item) => {
 
       try{
-        const exists = item.Type === 1 ? await this.props.destinationWeb.getFolderByServerRelativeUrl(`${destination.path}/${item.Name}`).get() : await this.props.destinationWeb.getFileByServerRelativeUrl(`${destination.path}/${item.Name}`).get();
+        const destWeb = this.props.destinationWeb as IWeb
+        const exists = item.Type === 1 ? await destWeb.getFolderByServerRelativeUrl(`${destination.path}/${item.Name}`).get() : await destWeb.getFileByServerRelativeUrl(`${destination.path}/${item.Name}`).get();
         
         return {
           ...item,
@@ -308,7 +310,8 @@ export default class ConfirmDialog extends React.Component<IConfirmDialogProps, 
 
           //return moveOrchestrator(this.props.context, res.UniqueId, res.ServerRelativeUrl, `${this.props.destination.path}/${folderName}`, this.props.destinationWeb, observer)
           if(row.Exists){
-            return moveFilesAndMerge(this.props.context, res.UniqueId, this.props.destination.path, this.props.destinationWeb, observer);
+            const destWeb = this.props.destinationWeb as IWeb
+            return moveFilesAndMerge(this.props.context, res.UniqueId, this.props.destination.path, destWeb, observer);
           }
           else{
             return moveFilesAsCopyJob(this.props.context, res.UniqueId, false, this.props.destination.path, observer);

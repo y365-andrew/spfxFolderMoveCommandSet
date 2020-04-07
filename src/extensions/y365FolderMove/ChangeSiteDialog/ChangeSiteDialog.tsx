@@ -5,6 +5,7 @@ import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { sp, Web, IWeb } from '@pnp/sp/presets/all';
 import { graph } from '@pnp/graph';
+import { IDrive } from '@pnp/graph/onedrive';
 import '@pnp/graph/users';
 import '@pnp/graph/onedrive';
 
@@ -13,7 +14,7 @@ import styles from './ChangeSiteDialog.module.scss';
 export interface IChangeSiteDialogProps{
     isOpen: boolean;
     onDismiss: () => void;
-    onSelectWeb: (Web) => void;
+    onSelectWeb: (destinationType: EDestinationType, Web: IWeb | IDrive) => void;
 }
 
 export interface IChangeSiteDialogState{
@@ -114,7 +115,7 @@ export default class ChangeSiteDialog extends React.Component<IChangeSiteDialogP
                     console.log(isValid);
         
                     if(isValid){
-                        this.props.onSelectWeb(testWeb)
+                        this.props.onSelectWeb(this.state.destinationType, testWeb)
                     }
                     else{
                         this.setState({
@@ -141,7 +142,7 @@ export default class ChangeSiteDialog extends React.Component<IChangeSiteDialogP
 
         
                     if(isValid){
-                        this.props.onSelectWeb(testWeb)
+                        this.props.onSelectWeb(this.state.destinationType, testWeb)
                     }
                     else{
                         this.setState({
