@@ -640,6 +640,17 @@ export async function moveFilesAsCopyJob(context: ListViewCommandSetContext, sou
     throw new Error(createRes.error.message)
   }
 
+  const storedJobsString = localStorage.getItem("y365RunningJobs");
+  const storedJobs = storedJobsString ? JSON.parse(storedJobsString) : false;
+  const jobProgressBody = {
+    copyJobInfo:{
+      EncryptionKey: createRes.EncryptionKey,
+      JobId: createRes.JobId,
+      JobQueueUri: createRes.JobQueueUri
+    }
+  };
+  localStorage.setItem("y365RunningJobs", JSON.stringify( storedJobs ? [...storedJobs, jobProgressBody] : [jobProgressBody] ));
+
   let progress = await getCopyJobProgress(context, siteUrl, createRes, logObserver);
   console.log(progress);
 
@@ -699,10 +710,6 @@ export async function getCopyJobProgress(context: ListViewCommandSetContext, sit
         }
         case "JobQueued": {
           log.write("Job queued");
-
-          const storedJobsString = localStorage.getItem("y365RunningJobs");
-          const storedJobs = storedJobsString ? JSON.parse(storedJobsString) : false;
-          localStorage.setItem("y365RunningJobs", JSON.stringify( storedJobs ? [...storedJobs, body] : [body] ));
           break;
         }
         case "JobLogFileCreate": {

@@ -25,6 +25,11 @@
       "title":{ "default": "View shift progress" },
       "iconImageUrl": "https://img.icons8.com/pastel-glyph/64/000000/line-chart.png",
       "type": "command"
+    },
+    "DELETE_FOLDER": {
+      "title":{ "default": "Remove Recursively" },
+      "iconImageUrl": "https://img.icons8.com/pastel-glyph/64/000000/interstate-plow-truck.png",
+      "type": "command"
     }
   }
 }

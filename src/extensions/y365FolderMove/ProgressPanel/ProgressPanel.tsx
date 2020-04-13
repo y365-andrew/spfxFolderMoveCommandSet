@@ -96,7 +96,9 @@ export default function ProgressPanel(props: IProgressPanelProps) {
                   job.messages && Array.isArray(job.messages) ? (
                     <ul className={ styles.jobList }>
                       {
-                        job.messages.map((msg) => <li><pre>{ JSON.stringify(msg, null, " ") }</pre></li>)
+                        job.messages.map((msg) => ( 
+                          <li><b>{ msg }</b> </li>
+                        ))
                       }
                     </ul>
                   ) : <Spinner />

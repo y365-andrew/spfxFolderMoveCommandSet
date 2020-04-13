@@ -7,6 +7,7 @@ import {
   IListViewCommandSetExecuteEventParameters
 } from '@microsoft/sp-listview-extensibility';
 import { Dialog } from '@microsoft/sp-dialog';
+import DeleteDialog from './DeleteDialog/DeleteDialog';
 import MoveDialog from './MoveDialog/MoveDialog';
 import ProgressPanelHost from './ProgressPanelHost/ProgressPanelHost';
 import { setup as pnpSetup } from '@pnp/common';
@@ -28,7 +29,7 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
   private progressPanelHost: ProgressPanelHost;
 
   @override
-  public onInit(): Promise<void> {    
+  public onInit(): Promise<void> {
     Log.info(LOG_SOURCE, 'Initialized Y365FolderMoveCommandSet');
 
     pnpSetup({
@@ -37,19 +38,32 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
 
     this.progressPanelHost = new ProgressPanelHost(this.context);
 
+    const showProgressCommand: Command = this.tryGetCommand("SHOW_PROGRESS");
+    const isAdmin = this.context.pageContext.list.permissions.hasPermission(SPPermission.manageWeb);
+
+    if(showProgressCommand){
+      showProgressCommand.visible = isAdmin;
+    }
+
     return Promise.resolve();
   }
 
   @override
   public onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): void {
-    const compareOneCommand: Command = this.tryGetCommand('MOVE_FOLDER');
+    const moveFolderCommand: Command = this.tryGetCommand('MOVE_FOLDER');
+    const deleteFolderCommand: Command = this.tryGetCommand("DELETE_FOLDER");
+    const isAdmin = this.context.pageContext.list.permissions.hasPermission(SPPermission.manageWeb);
 
-    if (compareOneCommand) {
+    if (moveFolderCommand) {
       const hasPermission = this.context.pageContext.list.permissions.hasPermission(SPPermission.editListItems);
       const moreThanOneSelected = event.selectedRows.length >= 1;
       // This command should be hidden unless move than one row is selected and the user has edit items permission on the list
-      compareOneCommand.title = "Shift"
-      compareOneCommand.visible = hasPermission && moreThanOneSelected;
+      moveFolderCommand.title = "Shift"
+      moveFolderCommand.visible = hasPermission && moreThanOneSelected;
+    }
+    if(deleteFolderCommand){
+      const moreThanOneSelected = event.selectedRows.length >= 1;
+      deleteFolderCommand.visible = isAdmin && moreThanOneSelected;
     }
   }
 
@@ -72,6 +86,11 @@ export default class Y365FolderMoveCommandSet extends BaseListViewCommandSet<IY3
         break;
       case 'SHOW_PROGRESS':
         this.progressPanelHost.show();
+        break;
+      case 'DELETE_FOLDER':
+        const deleteDialog = new DeleteDialog();
+        deleteDialog.init(this.context, event.selectedRows);
+
         break;
       default:
         throw new Error('Unknown command');
